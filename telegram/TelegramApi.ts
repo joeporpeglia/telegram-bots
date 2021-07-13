@@ -1,6 +1,7 @@
 import { NowRequest, NowResponse } from "@now/node";
 import { User, Update } from "telegraf/typings/telegram-types";
 import fetch from "node-fetch";
+import { URLSearchParams } from "url";
 
 export type SendMessageResponse = {
   method: "sendMessage";
