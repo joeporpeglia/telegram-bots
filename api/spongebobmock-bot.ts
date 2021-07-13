@@ -17,7 +17,7 @@ type ImgFlipCaptionFailure = {
 
 type ImgFlipResponse = ImgFlipCaptionFailure | ImgFlipCaptionSuccess;
 
-export default createWebhook(async update => {
+export default createWebhook(async (update) => {
   if (!update.message) {
     return null;
   }
@@ -38,7 +38,7 @@ export default createWebhook(async update => {
 
   const fetchResponse = await fetch("https://api.imgflip.com/caption_image", {
     method: "POST",
-    body: form
+    body: form,
   });
 
   const response: ImgFlipResponse = await fetchResponse.json();
@@ -52,7 +52,7 @@ export default createWebhook(async update => {
     chat_id: message.chat.id,
     method: "sendPhoto",
     reply_to_message_id: message.reply_to_message?.message_id,
-    photo: response.data.url
+    photo: response.data.url,
   };
 });
 

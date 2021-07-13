@@ -5,6 +5,10 @@
   "repository": "git@github.com:joeporpeglia/telegram-pointz-bot.git",
   "author": "Joe Porpeglia <josephp@spotify.com>",
   "license": "MIT",
+  "scripts": {
+    "lint": "prettier -c .",
+    "lint:fix": "prettier -w ."
+  },
   "dependencies": {
     "@now/node": "^1.4.1",
     "airtable": "^0.8.1",
@@ -14,6 +18,7 @@
     "typescript": "^3.8.3"
   },
   "devDependencies": {
-    "@types/node-fetch": "^2.5.5"
+    "@types/node-fetch": "^2.5.5",
+    "prettier": "^2.3.2"
   }
 }
