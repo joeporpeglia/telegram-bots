@@ -1,4 +1,3 @@
-import { Message, User } from "telegraf/typings/telegram-types";
 import {
   createWebhook,
   WebhookResponse,
@@ -8,11 +7,16 @@ import {
   assignPointsToUser,
   getPointsLeaderboard,
 } from "../airtable/PointsTable";
+import {
+  Message,
+  User,
+  CommonMessageBundle,
+} from "telegraf/typings/core/types/typegram";
 
 export default createWebhook(async (update) => {
-  const message = update.message;
+  const message = update.message as Message.TextMessage;
 
-  if (!message || !message.text?.startsWith("@pointz_bot ")) {
+  if (!message.text || !message.text.startsWith("@pointz_bot ")) {
     return null;
   }
 
@@ -29,21 +33,21 @@ export default createWebhook(async (update) => {
   return null;
 });
 
-function shouldAssignPoints(message: Message) {
+function shouldAssignPoints(message: Message.TextMessage) {
   return (
     message.reply_to_message != null &&
     Number.isInteger(parsePointAmount(message.text ?? ""))
   );
 }
 
-function shouldListPoints(message: Message) {
+function shouldListPoints(message: Message.TextMessage) {
   return (
     message.reply_to_message == null && message.text === "@pointz_bot list"
   );
 }
 
 async function handleAssignPoints(
-  message: Message
+  message: Message.TextMessage
 ): Promise<WebhookResponse | null> {
   const sender = message.from;
   const recipient = message.reply_to_message?.from;

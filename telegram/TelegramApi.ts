@@ -1,7 +1,7 @@
 import { NowRequest, NowResponse } from "@now/node";
-import { User, Update } from "telegraf/typings/telegram-types";
 import fetch from "node-fetch";
 import { URLSearchParams } from "url";
+import { Update, User } from "telegraf/typings/core/types/typegram";
 
 export type SendMessageResponse = {
   method: "sendMessage";
@@ -19,16 +19,20 @@ export type SendPhotoResponse = {
 
 export type WebhookResponse = SendMessageResponse | SendPhotoResponse;
 
-export type Webhook = (update: Update) => Promise<WebhookResponse | null>;
+export type Webhook = (
+  update: Update.MessageUpdate
+) => Promise<WebhookResponse | null>;
 
 export function createWebhook(handleUpdate: Webhook) {
   return async (req: NowRequest, res: NowResponse) => {
-    const update: Update | null = req.body;
+    const maybeUpdate = req.body;
 
-    if (!update) {
+    if (!maybeUpdate || !maybeUpdate.message) {
       res.status(200).send("ok");
       return;
     }
+
+    const update: Update.MessageUpdate = maybeUpdate;
 
     let response;
 

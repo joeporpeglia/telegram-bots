@@ -1,6 +1,7 @@
 import fetch from "node-fetch";
 import FormData from "form-data";
 import { createWebhook } from "../telegram/TelegramApi";
+import { Message } from "telegraf/typings/core/types/typegram";
 
 type ImgFlipCaptionSuccess = {
   success: true;
@@ -18,12 +19,13 @@ type ImgFlipCaptionFailure = {
 type ImgFlipResponse = ImgFlipCaptionFailure | ImgFlipCaptionSuccess;
 
 export default createWebhook(async (update) => {
-  if (!update.message) {
+  const message = update.message as Message.TextMessage;
+
+  if (!message.text) {
     return null;
   }
 
-  const message = update.message;
-  const parent = message.reply_to_message;
+  const parent = message.reply_to_message as Message.TextMessage;
 
   // Ignore everything except mentions as replies
   if (message.text !== "@spongebobmock_bot" || !parent || !parent.text) {
