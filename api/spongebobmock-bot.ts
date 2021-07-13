@@ -25,7 +25,7 @@ export default async (req: NowRequest, res: NowResponse) => {
   const body = req.body;
 
   if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
-    return;
+    return res.status(200).send("ok");
   }
 
   const message = body.message;
@@ -34,7 +34,7 @@ export default async (req: NowRequest, res: NowResponse) => {
     message.text !== "@spongebobmock_bot" ||
     !isTextMessage(message.reply_to_message)
   ) {
-    return;
+    return res.status(200).send("ok");
   }
 
   const parent = message.reply_to_message;
@@ -52,13 +52,13 @@ export default async (req: NowRequest, res: NowResponse) => {
 
   const response: ImgFlipResponse = await fetchResponse.json();
 
-  if (!response.success) {
-    return;
+  if (response.success) {
+    await telegram.sendPhoto(message.chat.id, response.data.url, {
+      reply_to_message_id: parent.message_id,
+    });
   }
 
-  telegram.sendPhoto(message.chat.id, response.data.url, {
-    reply_to_message_id: parent.message_id,
-  });
+  return res.status(200).send("ok");
 };
 
 function spongebobCase(text: string) {

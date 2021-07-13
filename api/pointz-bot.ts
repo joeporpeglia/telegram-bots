@@ -13,20 +13,22 @@ export default async (req: NowRequest, res: NowResponse) => {
   const body = req.body;
 
   if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
-    return;
+    return res.status(200).send("ok");
   }
 
   const message = body.message;
 
   if (!message.text.startsWith("@pointz_bot ")) {
-    return;
+    return res.status(200).send("ok");
   }
 
   if (shouldAssignPoints(message)) {
-    handleAssignPoints(message);
+    await handleAssignPoints(message);
   } else if (shouldListPoints(message)) {
-    handleListPoints(message);
+    await handleListPoints(message);
   }
+
+  return res.status(200).send("ok");
 };
 
 function shouldAssignPoints(message: Message.TextMessage) {
