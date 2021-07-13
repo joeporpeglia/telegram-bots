@@ -1,7 +1,8 @@
 import fetch from "node-fetch";
 import FormData from "form-data";
-import { createWebhook } from "../telegram/TelegramApi";
-import { Message } from "telegraf/typings/core/types/typegram";
+import { NowRequest, NowResponse } from "@now/node";
+import { isMessageUpdate, isTextMessage } from "../telegram-util";
+import { Telegram } from "telegraf";
 
 type ImgFlipCaptionSuccess = {
   success: true;
@@ -18,19 +19,25 @@ type ImgFlipCaptionFailure = {
 
 type ImgFlipResponse = ImgFlipCaptionFailure | ImgFlipCaptionSuccess;
 
-export default createWebhook(async (update) => {
-  const message = update.message as Message.TextMessage;
+const telegram = new Telegram(process.env.SPONGEBOBMOCK_BOT_TOKEN ?? "");
 
-  if (!message.text) {
-    return null;
+export default async (req: NowRequest, res: NowResponse) => {
+  const body = req.body;
+
+  if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
+    return;
   }
 
-  const parent = message.reply_to_message as Message.TextMessage;
+  const message = body.message;
 
-  // Ignore everything except mentions as replies
-  if (message.text !== "@spongebobmock_bot" || !parent || !parent.text) {
-    return null;
+  if (
+    message.text !== "@spongebobmock_bot" ||
+    !isTextMessage(message.reply_to_message)
+  ) {
+    return;
   }
+
+  const parent = message.reply_to_message;
 
   const form = new FormData();
   form.append("template_id", "102156234");
@@ -46,17 +53,13 @@ export default createWebhook(async (update) => {
   const response: ImgFlipResponse = await fetchResponse.json();
 
   if (!response.success) {
-    console.error(response);
-    return null;
+    return;
   }
 
-  return {
-    chat_id: message.chat.id,
-    method: "sendPhoto",
-    reply_to_message_id: message.reply_to_message?.message_id,
-    photo: response.data.url,
-  };
-});
+  telegram.sendPhoto(message.chat.id, response.data.url, {
+    reply_to_message_id: parent.message_id,
+  });
+};
 
 function spongebobCase(text: string) {
   const bobbed = [];

@@ -5,6 +5,7 @@
     "target": "es2020",
     "module": "commonjs",
     "strict": true,
+    "noUnusedLocals": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true

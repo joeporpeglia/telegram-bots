@@ -1,37 +1,33 @@
 import {
-  createWebhook,
-  WebhookResponse,
-  getUser,
-} from "../telegram/TelegramApi";
-import {
   assignPointsToUser,
   getPointsLeaderboard,
 } from "../airtable/PointsTable";
-import {
-  Message,
-  User,
-  CommonMessageBundle,
-} from "telegraf/typings/core/types/typegram";
+import { Message, ChatMember } from "telegraf/typings/core/types/typegram";
+import { Telegram } from "telegraf";
+import { isMessageUpdate, isTextMessage } from "../telegram-util";
+import { NowRequest, NowResponse } from "@now/node";
 
-export default createWebhook(async (update) => {
-  const message = update.message as Message.TextMessage;
+const telegram = new Telegram(process.env.POINTZ_BOT_TOKEN ?? "");
 
-  if (!message.text || !message.text.startsWith("@pointz_bot ")) {
-    return null;
+export default async (req: NowRequest, res: NowResponse) => {
+  const body = req.body;
+
+  if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
+    return;
+  }
+
+  const message = body.message;
+
+  if (!message.text.startsWith("@pointz_bot ")) {
+    return;
   }
 
   if (shouldAssignPoints(message)) {
-    return handleAssignPoints(message);
+    handleAssignPoints(message);
+  } else if (shouldListPoints(message)) {
+    handleListPoints(message);
   }
-
-  if (shouldListPoints(message)) {
-    return handleListPoints(message);
-  }
-
-  console.log("Message ignored", JSON.stringify(message, null, 2));
-
-  return null;
-});
+};
 
 function shouldAssignPoints(message: Message.TextMessage) {
   return (
@@ -46,9 +42,7 @@ function shouldListPoints(message: Message.TextMessage) {
   );
 }
 
-async function handleAssignPoints(
-  message: Message.TextMessage
-): Promise<WebhookResponse | null> {
+async function handleAssignPoints(message: Message.TextMessage) {
   const sender = message.from;
   const recipient = message.reply_to_message?.from;
   const text = message.text ?? "";
@@ -66,43 +60,39 @@ async function handleAssignPoints(
   ) {
     response = "Lol calm down Shannon";
   } else {
-    const record = await assignPointsToUser(
-      message.chat.id,
-      recipient?.id as number,
-      amount
-    );
+    await assignPointsToUser(message.chat.id, recipient?.id as number, amount);
   }
 
   if (!response) {
-    return null;
+    return;
   }
 
-  return {
-    method: "sendMessage",
-    chat_id: message.chat.id,
+  await telegram.sendMessage(message.chat.id, response, {
     reply_to_message_id: message.message_id,
-    text: response,
-  };
+  });
 }
 
-async function handleListPoints(message: Message): Promise<WebhookResponse> {
+async function handleListPoints(message: Message) {
   const leaderboard = await getPointsLeaderboard(message.chat.id);
   const leaderboardUsers = await Promise.all(
-    leaderboard.map((r) => getUser(r.get("chat_id"), r.get("user_id")))
+    leaderboard.map((r) =>
+      telegram
+        .getChatMember(r.get("chat_id"), r.get("user_id"))
+        .catch(() => null)
+    )
   );
-
-  return {
-    method: "sendMessage",
-    chat_id: message.chat.id,
-    text: leaderboardUsers
-      .map(
-        (u, i) =>
-          `${leaderboardIcon(i)}: ${getDisplayName(u)} (${leaderboard[i].get(
+  const response = leaderboardUsers
+    .map((u, i) =>
+      u
+        ? `${leaderboardIcon(i)}: ${getDisplayName(u)} (${leaderboard[i].get(
             "points"
           )})`
-      )
-      .join("\n"),
-  };
+        : null
+    )
+    .filter((row) => row !== null)
+    .join("\n");
+
+  await telegram.sendMessage(message.chat.id, response);
 }
 
 function leaderboardIcon(i: number) {
@@ -114,7 +104,7 @@ function leaderboardIcon(i: number) {
     case 2:
       return "🥉";
     default:
-      return "💀";
+      return "🙃";
   }
 }
 
@@ -122,10 +112,10 @@ function parsePointAmount(text: string) {
   return parseInt(text.replace("@pointz_bot ", ""), 10);
 }
 
-function getDisplayName(user: User | null = null) {
-  if (!user) {
+function getDisplayName(member: ChatMember | null = null) {
+  if (!member || !member.user) {
     return "Unknown";
   }
 
-  return user.first_name ?? user.username;
+  return member.user.first_name;
 }
