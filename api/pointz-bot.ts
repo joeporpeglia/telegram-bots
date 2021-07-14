@@ -6,6 +6,7 @@ import { Message, ChatMember } from "telegraf/typings/core/types/typegram";
 import { Telegram } from "telegraf";
 import { isMessageUpdate, isTextMessage } from "../telegram-util";
 import { NowRequest, NowResponse } from "@now/node";
+import { EventStoreFirebase } from "../points-model";
 
 const telegram = new Telegram(process.env.POINTZ_BOT_TOKEN ?? "");
 
@@ -63,6 +64,13 @@ async function handleAssignPoints(message: Message.TextMessage) {
     response = "Lol calm down Shannon";
   } else {
     await assignPointsToUser(message.chat.id, recipient?.id as number, amount);
+    await EventStoreFirebase.saveEvent(message.chat.id + "", {
+      type: "points-assigned",
+      recipientUserId: recipient?.id + "",
+      senderUserId: sender?.id + "",
+      pointsAmount: amount,
+      messageId: message.message_id + "",
+    });
   }
 
   if (!response) {
