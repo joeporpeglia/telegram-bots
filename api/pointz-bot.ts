@@ -148,7 +148,7 @@ async function handleEndCompetition(message: Message.TextMessage) {
   const startIndex = events.findIndex(
     (event) =>
       event.type === "competition-started" &&
-      event.competitionName.toLowerCase() === competitionName.toUpperCase()
+      event.competitionName.toLowerCase() === competitionName.toLowerCase()
   );
 
   const results = events
