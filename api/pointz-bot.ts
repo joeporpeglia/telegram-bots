@@ -155,10 +155,11 @@ async function handleEndCompetition(message: Message.TextMessage) {
     .slice(startIndex)
     .reduce<Record<string, number>>((acc, event) => {
       if (event.type === "points-assigned") {
-        if (!(event.recipientUserId in acc)) {
+        if (!acc[event.recipientUserId]) {
           acc[event.recipientUserId] = 0;
         }
-        acc[event.recipientUserId] += 1;
+
+        acc[event.recipientUserId] += event.pointsAmount;
       }
       return acc;
     }, {});

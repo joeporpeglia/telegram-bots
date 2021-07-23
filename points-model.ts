@@ -57,6 +57,8 @@ export const EventStoreFirebase: EventStore = {
       .orderBy("createdAt", "asc")
       .get();
 
-    return events.docs.map((doc) => doc.data() as Event);
+    return events.docs
+      .map((doc) => doc.data() as EventDocument)
+      .map((doc) => doc.event);
   },
 };
