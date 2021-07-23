@@ -8,7 +8,24 @@ export type PointsAssigned = {
   pointsAmount: number;
 };
 
-export type Event = PointsAssigned;
+export type CompetitionStarted = {
+  type: "competition-started";
+  senderUserId: string;
+  competitionName: string;
+};
+
+export type CompetitionEnded = {
+  type: "competition-ended";
+  senderUserId: string;
+  competitionName: string;
+};
+
+export type Event = PointsAssigned | CompetitionStarted | CompetitionEnded;
+
+export type EventDocument = {
+  event: Event;
+  createdAt: Date;
+};
 
 type EventStore = {
   saveEvent(chatId: string, event: Event): Promise<void>;
@@ -37,6 +54,7 @@ export const EventStoreFirebase: EventStore = {
       .collection("chats")
       .doc(chatId)
       .collection("events")
+      .orderBy("createdAt", "asc")
       .get();
 
     return events.docs.map((doc) => doc.data() as Event);

@@ -27,6 +27,10 @@ export default async (req: NowRequest, res: NowResponse) => {
     await handleAssignPoints(message);
   } else if (shouldListPoints(message)) {
     await handleListPoints(message);
+  } else if (shouldStartCompetition(message)) {
+    await handleStartCompetition(message);
+  } else if (shouldEndCompetition(message)) {
+    await handleEndCompetition(message);
   }
 
   return res.status(200).send("ok");
@@ -42,6 +46,22 @@ function shouldAssignPoints(message: Message.TextMessage) {
 function shouldListPoints(message: Message.TextMessage) {
   return (
     message.reply_to_message == null && message.text === "@pointz_bot list"
+  );
+}
+
+function shouldStartCompetition(message: Message.TextMessage) {
+  return (
+    message.reply_to_message == null &&
+    message.text.startsWith("@pointz_bot start ") &&
+    getCompetitionName(message.text).length > 0
+  );
+}
+
+function shouldEndCompetition(message: Message.TextMessage) {
+  return (
+    message.reply_to_message == null &&
+    message.text.startsWith("@pointz_bot end ") &&
+    getCompetitionName(message.text).length > 0
   );
 }
 
@@ -103,6 +123,75 @@ async function handleListPoints(message: Message) {
     .join("\n");
 
   await telegram.sendMessage(message.chat.id, response);
+}
+
+async function handleStartCompetition(message: Message.TextMessage) {
+  const competitionName = getCompetitionName(message.text);
+
+  await EventStoreFirebase.saveEvent(message.chat.id + "", {
+    type: "competition-started",
+    competitionName,
+    senderUserId: message.from?.id + "",
+  });
+}
+
+async function handleEndCompetition(message: Message.TextMessage) {
+  const competitionName = getCompetitionName(message.text);
+
+  await EventStoreFirebase.saveEvent(message.chat.id + "", {
+    type: "competition-ended",
+    competitionName,
+    senderUserId: message.from?.id + "",
+  });
+
+  const events = await EventStoreFirebase.getEvents(message.chat.id + "");
+  const startIndex = events.findIndex(
+    (event) =>
+      event.type === "competition-started" &&
+      event.competitionName.toLowerCase() === competitionName.toUpperCase()
+  );
+
+  const results = events
+    .slice(startIndex)
+    .reduce<Record<string, number>>((acc, event) => {
+      if (event.type === "points-assigned") {
+        if (!(event.recipientUserId in acc)) {
+          acc[event.recipientUserId] = 0;
+        }
+        acc[event.recipientUserId] += 1;
+      }
+      return acc;
+    }, {});
+
+  const sortedResults = Object.entries(results).sort(
+    ([_, aPoints], [__, bPoints]) => bPoints - aPoints
+  );
+
+  const resultsWithNames = await Promise.all(
+    sortedResults.map(async ([userId, points]) => {
+      const chatMember = await telegram.getChatMember(
+        message.chat.id,
+        parseInt(userId, 10)
+      );
+      return [chatMember.user.first_name, points] as const;
+    })
+  );
+
+  const leaderBoard = resultsWithNames
+    .map(([name, points], i) => `${leaderboardIcon(i)}: ${name} (${points})`)
+    .join("\n");
+
+  await telegram.sendMessage(
+    message.chat.id,
+    `${competitionName} has ended!\n${leaderBoard}`
+  );
+}
+
+function getCompetitionName(text: string) {
+  return text
+    .replace("@pointz_bot start ", "")
+    .replace("@pointz_bot end ", "")
+    .trim();
 }
 
 function leaderboardIcon(i: number) {
