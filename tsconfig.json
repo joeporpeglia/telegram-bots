@@ -1,13 +1,29 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "noEmit": true,
-    "lib": ["es2020"],
+    "lib": [
+      "es2020"
+    ],
     "target": "es2020",
     "module": "commonjs",
     "strict": true,
     "noUnusedLocals": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "incremental": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    "next-env.d.ts",
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

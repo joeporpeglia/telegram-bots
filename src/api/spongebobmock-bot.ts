@@ -1,6 +1,6 @@
-import fetch from "node-fetch";
 import FormData from "form-data";
-import { NowRequest, NowResponse } from "@now/node";
+import { NextApiRequest, NextApiResponse } from "next";
+import fetch from "node-fetch";
 import { isMessageUpdate, isTextMessage } from "../telegram-util";
 import { Telegram } from "telegraf";
 
@@ -21,7 +21,7 @@ type ImgFlipResponse = ImgFlipCaptionFailure | ImgFlipCaptionSuccess;
 
 const telegram = new Telegram(process.env.SPONGEBOBMOCK_BOT_TOKEN ?? "");
 
-export default async (req: NowRequest, res: NowResponse) => {
+export default async (req: NextApiRequest, res: NextApiResponse) => {
   const body = req.body;
 
   if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
@@ -50,7 +50,7 @@ export default async (req: NowRequest, res: NowResponse) => {
     body: form,
   });
 
-  const response: ImgFlipResponse = await fetchResponse.json();
+  const response = (await fetchResponse.json()) as ImgFlipResponse;
 
   if (response.success) {
     await telegram.sendPhoto(message.chat.id, response.data.url, {
