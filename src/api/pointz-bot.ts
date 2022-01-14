@@ -5,12 +5,12 @@ import {
 import { Message, ChatMember } from "telegraf/typings/core/types/typegram";
 import { Telegram } from "telegraf";
 import { isMessageUpdate, isTextMessage } from "../telegram-util";
-import { NowRequest, NowResponse } from "@now/node";
+import { NextApiRequest, NextApiResponse } from "next";
 import { EventStoreFirebase } from "../points-model";
 
 const telegram = new Telegram(process.env.POINTZ_BOT_TOKEN ?? "");
 
-export default async (req: NowRequest, res: NowResponse) => {
+export default async (req: NextApiRequest, res: NextApiResponse) => {
   const body = req.body;
 
   if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
