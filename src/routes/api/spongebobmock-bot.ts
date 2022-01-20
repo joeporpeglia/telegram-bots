@@ -1,8 +1,7 @@
-import FormData from "form-data";
-import { NextApiRequest, NextApiResponse } from "next";
-import fetch from "node-fetch";
-import { isMessageUpdate, isTextMessage } from "../telegram-util";
+import { isMessageUpdate, isTextMessage } from "~/telegram/utils";
 import { Telegram } from "telegraf";
+import { ActionFunction, LoaderFunction } from "remix";
+import { Update } from "telegraf/typings/core/types/typegram";
 
 type ImgFlipCaptionSuccess = {
   success: true;
@@ -21,11 +20,11 @@ type ImgFlipResponse = ImgFlipCaptionFailure | ImgFlipCaptionSuccess;
 
 const telegram = new Telegram(process.env.SPONGEBOBMOCK_BOT_TOKEN ?? "");
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const body = req.body;
+export const action: ActionFunction = async ({ request }) => {
+  const body: Update | undefined = await request.json();
 
   if (!body || !isMessageUpdate(body) || !isTextMessage(body.message)) {
-    return res.status(200).send("ok");
+    return new Response();
   }
 
   const message = body.message;
@@ -34,7 +33,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     message.text !== "@spongebobmock_bot" ||
     !isTextMessage(message.reply_to_message)
   ) {
-    return res.status(200).send("ok");
+    return new Response();
   }
 
   const parent = message.reply_to_message;
@@ -58,7 +57,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
   }
 
-  return res.status(200).send("ok");
+  return new Response();
 };
 
 function spongebobCase(text: string) {

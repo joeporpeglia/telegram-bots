@@ -3,28 +3,36 @@
   "version": "1.0.0",
   "main": "index.ts",
   "repository": "git@github.com:joeporpeglia/telegram-pointz-bot.git",
-  "author": "Joe Porpeglia <josephp@spotify.com>",
+  "author": "Joe Porpeglia <porpegliaj@gmail.com>",
   "license": "MIT",
+  "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build": "cross-env NODE_ENV=production remix build",
+    "dev": "cross-env NODE_ENV=development remix dev",
+    "postinstall": "remix setup node"
   },
   "dependencies": {
-    "airtable": "^0.11.1",
-    "firebase-admin": "^10.0.1",
-    "form-data": "^4.0.0",
-    "next": "^12.0.8",
-    "node-fetch": "^3.1.0",
+    "@firebase/app-compat": "^0.1.18",
+    "@firebase/app-types": "^0.7.0",
+    "@remix-run/react": "^1.2.2",
+    "@remix-run/vercel": "^1.2.2",
+    "airtable": "^0.11.2",
+    "firebase-admin": "10.0.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "telegraf": "^4.5.2",
-    "typescript": "^4.5.4"
+    "remix": "^1.2.2",
+    "telegraf": "^4.7.0"
   },
   "devDependencies": {
-    "@types/node-fetch": "^3.0.3",
-    "@types/react": "^17.0.38",
-    "prettier": "^2.5.1"
-  }
+    "@remix-run/dev": "^1.2.2",
+    "@remix-run/serve": "^1.2.2",
+    "@types/react": "^17.0.24",
+    "@types/react-dom": "^17.0.9",
+    "cross-env": "^7.0.3",
+    "typescript": "^4.5.5"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "sideEffects": false
 }
